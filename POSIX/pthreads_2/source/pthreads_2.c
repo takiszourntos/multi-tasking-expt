@@ -13,64 +13,63 @@
 #define	MAXINTS		5 // maximum number of integers that user may enter
 
 /*
- * global variables and constants
+ * 	global variables
  */
 int		num_ints=0;		// current number of integers entered by user
 int		done=0;			// flag indicating completion of user data entry
-float	average=0.0;	// global storage for average
+float 	average=0.0;	// global storage for the average
 
 /*
- * function to display the set of numbers periodically
+ *	function to display the set of numbers periodically
  */
 void	disp_sorted(int *data)
 {
 	if (num_ints != 0)
 	{
-		if ((num_ints % 1)==0) // display the set every 10 integers
+		printf("the current (sorted) integer set is: ");
+		for (int i=0; i!=num_ints; ++i)
 		{
-			printf("the current (sorted) integer set is: ");
-			for (int i=0; i!=num_ints; ++i)
-			{
-				printf("%d ", data[i]);
-			}
-			printf("\n");
+			printf("%d ", data[i]);
 		}
+		printf("\n");
 	}
 	return;              	// return the pointer to x
 }
 
 /*
- * thread function to display the average of the set of numbers periodically
+ *	thread function to display the average of the set of numbers periodically
  */
-//void 	*disp_avg_thread()
-//{
-//	if ((num_ints % 4)==0) // display the average every 4 integers
-//	{
-//		printf("the current average is: %f \n", average);
-//	}
-//	usleep(3000);		// put thread to sleep in order to save CPU cycles
-//	return NULL;
-//}
+void 	disp_avg(float x)
+{
+	printf("the current average is: %f\n", x);
+	return;
+}
 
 
 /*
- * thread function computes average of current set
+ *	thread function computes average of current set
  */
-//void	*avg_thread(void *arr)
-//{
-//	int 	*x = (int *) arr;	// cast the passed data to integer type
-//	int		sum=0;
-//	for (int i=0; i!=num_ints; ++i)
-//	{
-//		sum += x[i];
-//	}
-//	if (num_ints !=0)
-//	{
-//		average = (float) (sum/num_ints);
-//	}
-//	usleep(500); 	// put thread to sleep in order to save CPU cycles
-//	return x;
-//}
+void	*avg_thread(void *arr)
+{
+	int 	*x = (int *) arr;	// cast the passed data to integer type
+	int		sum;				// storage for the sum
+
+	while (done==0)
+	{
+		sum=0;
+		// add up the integer set
+		for (int i=0; i!=num_ints; ++i)
+		{
+			sum += x[i];
+		}
+		// calculate average, if possible
+		if (num_ints !=0)
+		{
+			average = (float) (sum/num_ints);
+		}
+	}
+	return x; // return the set, unchanged
+}
 
 /*
  * thread function sorts data set in its current set
@@ -102,15 +101,16 @@ void	*bubb_sort_thread(void *arr)
 				}
 			}
 		}
-		//usleep(50);			// put thread to sleep in order to save CPU cycles
 	}
-	return x;
+	return x; // return the set, sorted
 }
 
 int main()
 {
-    pthread_t 	thread_calc_2;	// this is our handle to the pthread
-    int 		set[MAXINTS]; 	//  storage for our numbers
+    pthread_t 	thread_calc_1;	// our handle for the averaging thread
+	pthread_t	thread_calc_2;	// our handle for the sorting thread
+    int 		set[MAXINTS]; 	// storage for our numbers
+
 
     // initialize set to zero
     for (int i=0; i != MAXINTS; ++i)
@@ -118,23 +118,12 @@ int main()
     	set[i]=0;
     }
 
-    // create the threads, returns 0 on the successful creation of each thread
-//    if(pthread_create(&thread_disp_1, NULL, &disp_nums_thread, set)!=0)
-//    {
-//    	printf("Failed to create the thread\n");
-//    	return 1;
-//    }
-
-//    if(pthread_create(&thread_disp_2, NULL, &disp_avg_thread, NULL)!=0)
-//    {
-//    	printf("Failed to create the thread\n");
-//    	return 1;
-//    }
-//    if(pthread_create(&thread_calc_1, NULL, &avg_thread, set)!=0)
-//    {
-//    	printf("Failed to create the thread\n");
-//    	return 1;
-//    }
+    // create threads
+    if(pthread_create(&thread_calc_1, NULL, &avg_thread, (void *)set)!=0)
+    {
+    	printf("Failed to create the thread\n");
+    	return 1;
+    }
 
     if(pthread_create(&thread_calc_2, NULL, &bubb_sort_thread, (void *)set)!=0)
     {
@@ -151,16 +140,10 @@ int main()
     	++num_ints;
     	usleep(2000); // encourage pthreads to run
     	disp_sorted(set);
+    	disp_avg(average);
     	printf("num_ints=%d\n",num_ints);
     }
     done=1; // user has finished entering data
-//    pthread_cancel(thread_calc_1);
-//    pthread_cancel(thread_calc_2);
-//    pthread_cancel(thread_disp_1);
-//    pthread_cancel(thread_disp_2);
-    void *result;
-    pthread_join(thread_calc_2, &result);
-    disp_sorted((int *)result);
     return 0;
 }
 
