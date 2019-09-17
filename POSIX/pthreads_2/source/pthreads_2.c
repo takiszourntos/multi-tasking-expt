@@ -16,6 +16,7 @@
  * global variables and constants
  */
 int		num_ints=0;		// current number of integers entered by user
+int		done=0;			// flag indicating completion of user data entry
 float	average=0.0;	// global storage for average
 
 /*
@@ -77,13 +78,15 @@ void	disp_sorted(int *data)
 void	*bubb_sort_thread(void *arr)
 {
 	int 	*x = (int *) arr;	// cast the passed data to integer type
-	int 	swaps = 1; 			// a flag indicating if a swap has occurred (if none occur, this set is sorted)
+	int 	swaps; 				// a flag indicating if a swap has occurred (if none occur, this set is sorted)
 	int		temp;
 
-	while (num_ints != MAXINTS)
+	//while (num_ints != MAXINTS)
+	while (done==0)
 	{
 		if (num_ints != 0)
 		{
+			swaps = 1;
 			while (swaps==1)
 			{
 				swaps = 0; // if a swap occurs, this flag toggled
@@ -99,7 +102,7 @@ void	*bubb_sort_thread(void *arr)
 				}
 			}
 		}
-		usleep(250);			// put thread to sleep in order to save CPU cycles
+		//usleep(50);			// put thread to sleep in order to save CPU cycles
 	}
 	return x;
 }
@@ -146,10 +149,11 @@ int main()
     	scanf("%d", &user_int);
     	set[num_ints]=user_int;
     	++num_ints;
+    	usleep(2000); // encourage pthreads to run
     	disp_sorted(set);
-    	printf("num_ints=%d",num_ints);
-    	usleep(1000); // encourage pthreads to run
+    	printf("num_ints=%d\n",num_ints);
     }
+    done=1; // user has finished entering data
 //    pthread_cancel(thread_calc_1);
 //    pthread_cancel(thread_calc_2);
 //    pthread_cancel(thread_disp_1);
@@ -157,7 +161,7 @@ int main()
     void *result;
     pthread_join(thread_calc_2, &result);
     disp_sorted((int *)result);
-    return EXIT_SUCCESS;
+    return 0;
 }
 
 
