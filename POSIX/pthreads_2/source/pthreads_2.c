@@ -80,24 +80,27 @@ void	*bubb_sort_thread(void *arr)
 	int 	swaps = 1; 			// a flag indicating if a swap has occurred (if none occur, this set is sorted)
 	int		temp;
 
-	if (num_ints != 0)
+	while (num_ints != MAXINTS)
 	{
-		while (swaps==1)
+		if (num_ints != 0)
 		{
-			swaps = 0; // if a swap occurs, this flag toggled
-			for (int i=0; i!=(num_ints-1); ++i)
+			while (swaps==1)
 			{
-				if (x[i] > x[i+1]) // elements must be in ascending order, if not ...
-				{	// ... then swap!
-					temp 	= x[i];
-					x[i] 	= x[i+1];
-					x[i+1] 	= temp;
-					swaps  	= 1; // a swap has occurred
+				swaps = 0; // if a swap occurs, this flag toggled
+				for (int i=0; i!=(num_ints-1); ++i)
+				{
+					if (x[i] > x[i+1]) // elements must be in ascending order, if not ...
+					{	// ... then swap!
+						temp 	= x[i];
+						x[i] 	= x[i+1];
+						x[i+1] 	= temp;
+						swaps  	= 1; // a swap has occurred
+					}
 				}
 			}
 		}
+		usleep(250);			// put thread to sleep in order to save CPU cycles
 	}
-	//usleep(500);			// put thread to sleep in order to save CPU cycles
 	return x;
 }
 
@@ -144,6 +147,7 @@ int main()
     	set[num_ints]=user_int;
     	++num_ints;
     	disp_sorted(set);
+    	printf("num_ints=%d",num_ints);
     	usleep(1000); // encourage pthreads to run
     }
 //    pthread_cancel(thread_calc_1);
