@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
+	<list key="org.eclipse.ui.internal.wizards.datatransfer.SmartImportRootWizardPage.knownSources">
+		<item value="/home/takis/Identities/takiszourntos/multi-tasking-expt/RTOS"/>
+	</list>
 	<list key="installedFeatures">
 		<item value="com.crt.lpcxpresso.feature.product:10.3.1.201902111813"/>
 		<item value="com.crt.lpcxpresso.feature:10.3.1.201902131125"/>
