@@ -1,2 +1,5 @@
 eclipse.preferences.version=1
+pathvariable.SDK_2_x_EVKB_IMXRT1050=/home/takis/mcuxpresso/01/SDKPackages/SDK_2.5.0_EVKB-IMXRT1050
+pathvariable.SDK_2_x_LPC54114J256=/home/takis/mcuxpresso/01/SDKPackages/SDK_2.5.0_LPC54114J256
+pathvariable.SDK_LPC_RESOURCES=/usr/local/mcuxpressoide-10.3.1_2233/ide/plugins/com.nxp.mcuxpresso.core.datamodels.resources_10.3.0.201810041206/override
 version=1
