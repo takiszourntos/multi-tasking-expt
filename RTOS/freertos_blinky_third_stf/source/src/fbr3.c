@@ -56,15 +56,13 @@ static void prvSetupHardware(void)
 }
 
 /* flashes an LED (specified colour) under mutex protection */
-static void vLEDFlash(colour_t *pLEDparam, portTickType *pxLastWakeTime)
+static void vLEDFlash(palette_t col, portTickType numticks, portTickType *pxLWT)
 {
-	palette_t		col = pLEDparam -> colour;
-	portTickType	numticks = pLEDparam -> delayTicks;
-
 	xSemaphoreTake(xMutexLED, portMAX_DELAY);
 	{
+		*pxLWT = xTaskGetTickCount(); /* timer starts here, once mutex is obtained */
 		Board_LED_Set(col, true); /* turn LED on */
-		vTaskDelayUntil(pxLastWakeTime, numticks); /* all other tasks are blocked thanks to mutex */
+		vTaskDelayUntil(pxLWT, numticks); /* all other tasks are blocked thanks to mutex */
 		Board_LED_Set(col, false); /* turn LED off */
 	}
 	xSemaphoreGive(xMutexLED);
@@ -75,13 +73,13 @@ static void vLEDTask(void *pvParameters)
 {
 	colour_t *pcolourCS;
 	pcolourCS = (colour_t *) pvParameters;
+	palette_t 		col = pcolourCS -> colour;
 	portTickType	numticks = pcolourCS -> delayTicks;
-	portTickType	xLastWakeTime;
-	xLastWakeTime = xTaskGetTickCount();
-
+	portTickType	xLastWakeTime; /* this should be measured from the time the
+									  the semaphore is given */
 	while (1)
 	{
-		vLEDFlash(pcolourCS, &xLastWakeTime);
+		vLEDFlash(col, numticks, &xLastWakeTime);
 		vTaskDelayUntil(&xLastWakeTime, (numticks << 1));
 	}
 }
