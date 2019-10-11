@@ -56,35 +56,30 @@ static void prvSetupHardware(void)
 }
 
 /* flashes an LED (specified colour) under mutex protection */
-static void vLEDFlash(palette_t col, portTickType numticks, portTickType *pxLWT)
+static void vLEDFlash(palette_t col, portTickType numticks) //, portTickType *pxLastWakeTime)
 {
 	xSemaphoreTake(xMutexLED, portMAX_DELAY);
 	{
-		*pxLWT = xTaskGetTickCount(); /* timer starts here, once mutex is obtained */
 		Board_LED_Set(col, true); /* turn LED on */
-		vTaskDelayUntil(pxLWT, numticks); /* all other tasks are blocked thanks to mutex */
+		vTaskDelay(numticks);
 		Board_LED_Set(col, false); /* turn LED off */
 	}
 	xSemaphoreGive(xMutexLED);
 }
 
-/* LED Red task/thread */
+/* LED task/thread */
 static void vLEDTask(void *pvParameters)
 {
-	colour_t *pcolourCS;
-	pcolourCS = (colour_t *) pvParameters;
-	palette_t 		col = pcolourCS -> colour;
-	portTickType	numticks = pcolourCS -> delayTicks;
-	portTickType	xLastWakeTime; /* this should be measured from the time the
-									  the semaphore is given */
+	colour_t *pLEDparam = (colour_t *) pvParameters;
+	palette_t	 col = pLEDparam -> colour;
+	portTickType numticks = pLEDparam -> delayTicks;
+
 	while (1)
 	{
-		vLEDFlash(col, numticks, &xLastWakeTime);
-		vTaskDelayUntil(&xLastWakeTime, (numticks << 1));
+		vLEDFlash(col, numticks);
+		vTaskDelay(numticks << 1);
 	}
 }
-
-
 /*****************************************************************************
  * Public functions
  ****************************************************************************/
@@ -108,17 +103,17 @@ int main(void)
 	if (xMutexLED != NULL)
 	{
 		/* create Red LED toggle thread */
-		xTaskCreate(vLEDTask, (signed char *) "vTaskLedRed",
+		xTaskCreate(vLEDTask, (signed char *) "vTaskLEDRed",
 					configMINIMAL_STACK_SIZE, &LEDparams[Red], (tskIDLE_PRIORITY + 3UL),
 					(xTaskHandle *) NULL);
 
 		/* create Green LED toggle thread */
-		xTaskCreate(vLEDTask, (signed char *) "vTaskLedGreen",
+		xTaskCreate(vLEDTask, (signed char *) "vTaskLEDGreen",
 					configMINIMAL_STACK_SIZE, &LEDparams[Green], (tskIDLE_PRIORITY + 2UL),
 					(xTaskHandle *) NULL);
 
 		/* create Blue LED toggle thread */
-		xTaskCreate(vLEDTask, (signed char *) "vTaskLedBlue",
+		xTaskCreate(vLEDTask, (signed char *) "vTaskLEDBlue",
 					configMINIMAL_STACK_SIZE, &LEDparams[Blue], (tskIDLE_PRIORITY + 1UL),
 					(xTaskHandle *) NULL);
 
