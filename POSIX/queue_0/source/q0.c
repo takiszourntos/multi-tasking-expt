@@ -28,6 +28,7 @@ void	*funcTx(void *pds)
 	unsigned int key = 0;
 	qrec_t newrec;
 	unsigned long i=0;
+	int delay;
 
 	while (i != Lq/2)
 	{
@@ -41,7 +42,8 @@ void	*funcTx(void *pds)
 		enqueue(q, newrec);
 
 		/* delay a bit to let dequeueing happen without overflowing */
-		usleep(2000);
+		delay = rand() % 32;
+		usleep(delay);
 
 		/* increment counter */
 		++i;
@@ -62,6 +64,8 @@ void	*funcRx(void *pds)
 	/* storage for the retrieved record */
 	qrec_t 	*pnewrec;
 
+	int delay;
+
 	unsigned long i=0;
 	while (i != Lq/2)
 	{
@@ -70,9 +74,11 @@ void	*funcRx(void *pds)
 			/* storage for retrieved record */
 			pnewrec = dequeue(q);
 
-			/* delay a bit to allow queue to build up somewhat */
-			usleep(2000);
 		}
+		/* delay a bit to allow queue to build up somewhat */
+		delay=rand() % 64;
+		usleep(delay);
+
 		/* increment counter */
 		++i;
 	}
@@ -105,9 +111,12 @@ int main()
     }
 
     /* allow threads to complete */
-    void *result;
-    pthread_join(thread_sender, &result);
-    pthread_join(thread_receiver, &result);
+    //void *result;
+    //pthread_join(thread_sender, &result);
+    // pthread_join(thread_receiver, &result);
+    usleep(20000); // give some time to run
+    pthread_cancel(thread_sender);
+    pthread_cancel(thread_receiver);
 
     /* print results */
     printf("final state of the queue: q.head=%zu and q.tail=%zu\n",qm.head,qm.tail);
