@@ -22,7 +22,7 @@
 void	*funcTx(void *pds)
 {
 	/* cast the passed data structure to our queue variable */
-	queue_t 	*q = (queue_t *) pds;
+	queue_t *q = (queue_t *) pds;
 	int xpos = 0;
 	int ypos = 0;
 	unsigned int key = 0;
@@ -84,21 +84,21 @@ void	*funcRx(void *pds)
 int main()
 {
     pthread_t 	thread_sender;	// our handle for the averaging thread
-	pthread_t	thread_receiver;	// our handle for the sorting thread
+    pthread_t	thread_receiver;	// our handle for the sorting thread
 
-	/* define and initialize main queue, qm */
-	queue_t qm;
-	qm.head = 0;
-	qm.tail = 0;
-	queue_t *pqm = &qm;
+    /* define and initialize main queue, qm */
+    queue_t qm;
+    qm.head = 0;
+    qm.tail = 0;
+    queue_t *pqm = &qm;
 
     /* create threads */
-    if(pthread_create(&thread_sender, NULL, &funcTx, (void *) pqm)!=0)
+    if (pthread_create(&thread_sender, NULL, &funcTx, (void *) pqm)!=0)
     {
     	printf("Failed to create the thread\n");
     	return 1;
     }
-    if(pthread_create(&thread_receiver, NULL, &funcRx, (void *) pqm)!=0)
+    if (pthread_create(&thread_receiver, NULL, &funcRx, (void *) pqm)!=0)
     {
     	printf("Failed to create the thread\n");
     	return 1;
