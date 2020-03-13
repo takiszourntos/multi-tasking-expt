@@ -79,7 +79,9 @@ enum superstateGOtype
 	L1,
 	L2, // basic animation states, player
 	U0,
+	U1,
 	D0, // additional states needed by aliens who move (U)p and (D)own
+	D1,
 	SELFCLEAN0,
 	SELFCLEAN1,
 	SELFCLEAN2,
@@ -136,7 +138,7 @@ struct go_struct
 	bool_t active;
 	bool_t gameover; // can only be altered by the vImpactsTask()!
 	go_coord_t pos;
-	go_coord_t des_vel; // character's desired velocity, checked by vImpactsTask()
+	go_coord_t vel; // character's desired velocity, checked by vImpactsTask()
 	bool_t can_move; // whether GO is allowed to move; (re)set by vImpactsTask()
 	go_coord_t acc;
 	superstateGO_t animstate; // storage for the GO animation state

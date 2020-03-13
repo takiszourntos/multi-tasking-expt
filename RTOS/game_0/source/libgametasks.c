@@ -150,7 +150,7 @@ static void prvUpdateInteractionList(go_t *pSub, go_t *pObj, uint16_t distance,
 	if (!found)
 	{
 		/* add node to interaction list */
-		go_list_t *pNew = (go_list_t *) pvPortMalloc(sizeof(go_list_t));
+		go_list_t *pNew = (go_list_t*) pvPortMalloc(sizeof(go_list_t));
 		pNew->ID = objID;
 		pNew->distance = distance;
 		pNew->seen = seen;
@@ -172,7 +172,7 @@ static void prvUpdateInteractionList(go_t *pSub, go_t *pObj, uint16_t distance,
 				/* remove the node */
 				ppW->pNext = pW->pNext;
 				(pW->pNext)->pPrev = ppW;
-				pvPortFree((void *) pW);
+				pvPortFree((void*) pW);
 			}
 			else
 			{
@@ -190,7 +190,7 @@ static void prvUpdateInteractionList(go_t *pSub, go_t *pObj, uint16_t distance,
  * GOs
  *
  */
-static void prvComputeProximities(go_t* pSubject, go_t* pObject)
+static void prvComputeProximities(go_t *pSubject, go_t *pObject)
 {
 	go_t *pW = pObject; /* working pointer */
 	go_list_t *pWI = pSubject->interactions;
@@ -318,7 +318,7 @@ spawnGONodeandTask(game_t *this_game, go_t *pGOHead, uint8_t GOtype,
 		{
 			taskENTER_CRITICAL();
 			go_t *pW = addGONode(this_game, pGOHead, 0, GOstartcoord, GOIDcode);
-			xTaskCreate(vPlayerTask, pW->taskText, 256, (void * ) this_game,
+			xTaskCreate(vPlayerTask, pW->taskText, 256, (void* ) this_game,
 					&(pW->task), GO_TASK_PRIORITY);
 			taskEXIT_CRITICAL();
 			return pW;
@@ -336,12 +336,12 @@ spawnGONodeandTask(game_t *this_game, go_t *pGOHead, uint8_t GOtype,
 		{
 			/* there is already at least one element in the GO list,
 			 * so find the next available spot... */
-			go_t* pW = pGOHead;
+			go_t *pW = pGOHead;
 			while (pW->pNext != NULL)
 			{
 				pW = pW->pNext;
 			}
-			go_t* pNew = addGONode(this_game, pGOHead, GOType, GOstartcoord,
+			go_t *pNew = addGONode(this_game, pGOHead, GOType, GOstartcoord,
 					GOIDCode);
 			pW->pNext = pNew;
 			pW = pNew; // make working ptr point to new node
@@ -349,19 +349,19 @@ spawnGONodeandTask(game_t *this_game, go_t *pGOHead, uint8_t GOtype,
 		switch (GOType)
 		{
 		case alien:
-			xTaskCreate(vAliensTask, pW->taskText, 256, (void * ) this_game,
+			xTaskCreate(vAliensTask, pW->taskText, 256, (void* ) this_game,
 					&(pW->task), GO_TASK_PRIORITY);
 		case pooh:
-			xTaskCreate(vPoohsTask, pW->taskText, 256, (void * ) this_game,
+			xTaskCreate(vPoohsTask, pW->taskText, 256, (void* ) this_game,
 					&(pW->task), GO_TASK_PRIORITY);
 		case expunger:
-			xTaskCreate(vExpungersTask, pW->taskText, 256, (void * ) this_game,
+			xTaskCreate(vExpungersTask, pW->taskText, 256, (void* ) this_game,
 					&(pW->task), GO_TASK_PRIORITY);
 		case baby:
-			xTaskCreate(vBabiesTask, pW->taskText, 256, (void * ) this_game,
+			xTaskCreate(vBabiesTask, pW->taskText, 256, (void* ) this_game,
 					&(pW->task), GO_TASK_PRIORITY);
 		case kitty:
-			xTaskCreate(vKittiesTask, pW->taskText, 256, (void * ) this_game,
+			xTaskCreate(vKittiesTask, pW->taskText, 256, (void* ) this_game,
 					&(pW->task), GO_TASK_PRIORITY);
 		}
 		taskEXIT_CRITICAL();
@@ -505,69 +505,121 @@ static void prvUpdateScreen(game_t *this_game)
  * 		* kitties: SELFCLEAN0, SELFCLEAN1, SELFCLEAN2, SELFCLEAN3 // states just for kitties
  *
  */
-superstateGO_t vPlayerStateMachine(superstateGO_t current_state)
+superstateGO_t vGOAnimStateMachine(go_t *go_member)
 {
 	superstateGO_t next_state;
 
-	switch (current_state)
+	switch (go_member->kind)
 	{
-	case R0:
-		next_state = R1;
-	case R1:
-		next_state = R2;
-	case R2:
-		if (user_input.left_button)
+	case player: // the player state is affected only by the user input
+		switch (go_member->animstate)
 		{
-			next_state = STOP;
+		case R0:
+			next_state = R1;
+		case R1:
+			next_state = R2;
+		case R2:
+			if (user_input.left_button)
+			{
+				next_state = STOP;
+			}
+			else
+			{
+				next_state = R0;
+			}
+		case L0:
+			next_state = L1;
+		case L1:
+			next_state = L2;
+		case L2:
+			if (user_input.right_button)
+			{
+				next_state = STOP;
+			}
+			else
+			{
+				next_state = L0;
+			}
+		case STOP:
+			if (user_input.right_button)
+			{
+				next_state = R0;
+			}
+			else if (user_input.left_button)
+			{
+				next_state = L0;
+			}
+			else if (user_input.fire_button)
+			{
+				next_state = FIRE;
+			}
+			else if (user_input.crouch_button)
+			{
+				next_state = CROUCH;
+			}
+		case CROUCH:
+			if (user_input.fire_button || user_input.left_button
+					|| user_input.right_button)
+			{
+				next_state = STOP; // stand up!
+			}
+		case FIRE:
+			if (user_input.crouch_button || user_input.left_button
+					|| user_input.right_button)
+			{
+				next_state = STOP; // got to get in position before shooting!
+			}
 		}
-		else
+
+	case alien:
+		// determine direction of velocity
+		bool_t moving_up = sgn_bool(go_member->vel.Y);
+		bool_t moving_right = sgn_bool(go_member->vel.X);
+
+		switch (go_member->animstate)
 		{
-			next_state = R0;
+		case STOP:
+			if (moving_right)
+				next_state = R0;
+			else if (!moving_right)
+				next_state = L0;
+			else if (moving_up)
+				next_state = U0;
+			else if (!moving_up)
+				next_state = D0;
+		case R0:
+			if (!moving_right)
+				next_state = STOP;
+		case L0:
+			if (moving_right)
+				next_state = STOP;
 		}
-	case L0:
-		next_state = L1;
-	case L1:
-		next_state = L2;
-	case L2:
-		if (user_input.right_button)
+
+	case pooh:
+		switch (go_member->animstate)
 		{
-			next_state = STOP;
+		case STOP:
+			next_state = D0;
+		case D0:
+			next_state = D1;
+		case D1:
+			next_state = D0;
 		}
-		else
+
+	case expunger:
+		switch (go_member->amimstate)
 		{
-			next_state = L0;
+		case STOP:
+			next_state = U0;
+		case U0:
+			next_state = U1;
+		case U1:
+			next_state = U0;
 		}
-	case STOP:
-		if (user_input.right_button)
-		{
-			next_state = R0;
-		}
-		else if (user_input.left_button)
-		{
-			next_state = L0;
-		}
-		else if (user_input.fire_button)
-		{
-			next_state = FIRE;
-		}
-		else if (user_input.crouch_button)
-		{
-			next_state = CROUCH;
-		}
-	case CROUCH:
-		if (user_input.fire_button || user_input.left_button
-				|| user_input.right_button)
-		{
-			next_state = STOP; // stand up!
-		}
-	case FIRE:
-		if (user_input.crouch_button || user_input.left_button
-				|| user_input.right_button)
-		{
-			next_state = STOP; // got to get in position before shooting!
-		}
+
 	}
 	vTaskDelay(MOVE_TICKS);
+	go_member->animstate = next_state;
 	return next_state;
 }
 
@@ -585,47 +637,7 @@ superstateGO_t vPlayerStateMachine(superstateGO_t current_state)
  * 		* kitties: SELFCLEAN0, SELFCLEAN1, SELFCLEAN2, SELFCLEAN3 // states just for kitties
  *
  */
-superstateGO_t vAlienStateMachine(superstateGO_t current_state, go_coord_t vel)
-{
-	superstateGO_t next_state;
-
-	// determine direction of velocity
-	bool_t moving_up = sgn_bool(&vel.Y);
-	bool_t moving_right = sgn_bool(&vel.X);
-
-	switch (current_state)
-	{
-	case STOP:
-		if (moving_right)
-			next_state = R0;
-		else if (!moving_right)
-			next_state = L0;
-	case R0:
-		if (!moving_right)
-			next_state = STOP;
-	case L0:
-		if (moving_right)
-			next_state = STOP;
-	}
-	vTaskDelay(MOVE_TICKS);
-	return next_state;
-}
-
-/*
- *
- * function determines alien GO animation state, based on user input, and
- * elapsed time
- *
- * every GO must have a STOP state, used as a default initial state of being
- * STOP, FIRE, CROUCH, R0, R1, R2, L0, L1, L2, // basic animation states, player
- * U0, D0, // additional states needed by aliens who move (U)p and (D)own
- * SELFCLEAN0, SELFCLEAN1, SELFCLEAN2, SELFCLEAN3 // states just for kitties
- *
- *
- *
- *
- */
-superstateGO_t vAlienStateMachine(superstateGO_t current_state, go_coord_t vel)
+superstateGO_t vPoohStateMachine(superstateGO_t current_state, go_coord_t vel)
 {
 	superstateGO_t next_state;
 
@@ -661,8 +673,8 @@ superstateGO_t vAlienStateMachine(superstateGO_t current_state, go_coord_t vel)
 
 void vPlayerTask(void *pvParams)
 {
-	game_t *this_game = (game_t *) pvParams;
-	playerstate_t xP = *((playerstate_t *) this_game->player->go_state);
+	game_t *this_game = (game_t*) pvParams;
+	playerstate_t xP = *((playerstate_t*) this_game->player->go_state);
 
 	if ()
 	{
@@ -681,7 +693,7 @@ void vPlayerTask(void *pvParams)
  */
 void vImpactsTask(void *pvParams)
 {
-	game_t *this_game = (game_t *) pvParams;
+	game_t *this_game = (game_t*) pvParams;
 	uint32_t GOIDcode;
 
 	/* main loop of Impacts Task */
@@ -851,12 +863,12 @@ void vImpactsTask(void *pvParams)
 void vRunGameTask(void *pvParams)
 {
 	/* variables */
-	size_t player = *((size_t *) pvParams); // the human player
+	size_t player = *((size_t*) pvParams); // the human player
 	go_t *pW = NULL;
 	xTaskHandle pvImpactsTaskHandle;
 
 	/* this entire game is stored in the following local variable: */
-	game_t *this_game = (game_t *) pvPortMalloc(sizeof(game_t));
+	game_t *this_game = (game_t*) pvPortMalloc(sizeof(game_t));
 
 	/* set some of this game's parameters, just to get us started */
 	this_game->score = 0;
@@ -896,7 +908,7 @@ void vRunGameTask(void *pvParams)
 			 * to run the show
 			 */
 			xTaskCreate(vImpactsTask, "Impact-checking Task", 1024,
-					(void * ) &this_game, &pvImpactsTaskHandle,
+					(void* ) &this_game, &pvImpactsTaskHandle,
 					IMPACTS_TASK_PRIORITY);
 
 			/* keep running until player loses life */

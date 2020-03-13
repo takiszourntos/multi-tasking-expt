@@ -34,7 +34,7 @@ static uint8_t rxbuff[UART_RRB_SIZE], txbuff[UART_SRB_SIZE];
 static RINGBUFF_T txring, rxring;
 
 //volatile queue_t q; /* UART queue */
-ui_t user_input =
+volatile ui_t user_input =
 { False, False, False, False };
 size_t number_of_players = 0;
 
@@ -158,7 +158,7 @@ int main(void)
 	for (size_t i = 0; i != number_of_players; ++i)
 	{
 		xTaskCreate(vRunGameTask, "Supervisory Game Task",
-				4*configMINIMAL_STACK_SIZE, (void * ) &i, NULL,
+				4*configMINIMAL_STACK_SIZE, (void* ) &i, NULL,
 				RUN_GAME_PRIORITY);
 	}
 
