@@ -573,8 +573,8 @@ superstateGO_t vGOAnimStateMachine(go_t *go_member)
 
 	case alien:
 		// determine direction of velocity
-		bool_t moving_up = sgn_bool(go_member->vel.Y);
-		bool_t moving_right = sgn_bool(go_member->vel.X);
+		volatile bool_t moving_up = sgn_bool(go_member->vel.Y);
+		volatile bool_t moving_right = sgn_bool(go_member->vel.X);
 
 		switch (go_member->animstate)
 		{
@@ -607,7 +607,7 @@ superstateGO_t vGOAnimStateMachine(go_t *go_member)
 		}
 
 	case expunger:
-		switch (go_member->amimstate)
+		switch (go_member->animstate)
 		{
 		case STOP:
 			next_state = U0;
@@ -617,7 +617,37 @@ superstateGO_t vGOAnimStateMachine(go_t *go_member)
 			next_state = U0;
 		}
 
+	case baby:
+
+	case kitty:
+		// determine direction of velocity
+		volatile int16_t velX = go_member->vel.X;
+		bool_t moving_right = sgn_bool(velX);
+		switch (go_member->animstate)
+		{
+		case STOP:
+			if (velX == 0)
+				next_state = STOP;
+			else if (moving_right)
+				next_state = R0;
+			else if (!moving_right)
+				next_state = L0;
+		case R0:
+			next_state = R1;
+		case R1:
+			next_state = R2;
+		case R2:
+			next_state = R0;
+		case L0:
+			next_state = L1;
+		case L1:
+			next_state = L2;
+		case L2:
+			next_state = L0;
+		}
+
 	}
+
 	vTaskDelay(MOVE_TICKS);
 	go_member->animstate = next_state;
 	return next_state;
