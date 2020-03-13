@@ -618,6 +618,31 @@ superstateGO_t vGOAnimStateMachine(go_t *go_member)
 		}
 
 	case baby:
+		// determine direction of velocity
+		volatile int16_t velX = go_member->vel.X;
+		bool_t moving_right = sgn_bool(velX);
+		switch (go_member->animstate)
+		{
+		case STOP:
+			if (velX == 0)
+				next_state = STOP;
+			else if (moving_right)
+				next_state = R0;
+			else if (!moving_right)
+				next_state = L0;
+		case R0:
+			next_state = R1;
+		case R1:
+			next_state = R2;
+		case R2:
+			next_state = R0;
+		case L0:
+			next_state = L1;
+		case L1:
+			next_state = L2;
+		case L2:
+			next_state = L0;
+		}
 
 	case kitty:
 		// determine direction of velocity
@@ -647,51 +672,11 @@ superstateGO_t vGOAnimStateMachine(go_t *go_member)
 		}
 
 	}
-
 	vTaskDelay(MOVE_TICKS);
 	go_member->animstate = next_state;
 	return next_state;
 }
 
-/*
- *
- * function determines alien GO animation state, based on user input, and
- * elapsed time
- *
- * every GO must have a STOP state, used as a default initial state of being
- *
- * additional GO-specific states:
- *
- * 		* player: FIRE, CROUCH, R0, R1, R2, L0, L1, L2, // basic animation states, player
- * 		* aliens: U0, D0, // additional states needed by aliens who move (U)p and (D)own
- * 		* kitties: SELFCLEAN0, SELFCLEAN1, SELFCLEAN2, SELFCLEAN3 // states just for kitties
- *
- */
-superstateGO_t vPoohStateMachine(superstateGO_t current_state, go_coord_t vel)
-{
-	superstateGO_t next_state;
-
-	// determine direction of velocity
-	bool_t moving_up = sgn_bool(vel.Y);
-	bool_t moving_right = sgn_bool(vel.X);
-
-	switch (current_state)
-	{
-	case STOP:
-		if (moving_right)
-			next_state = R0;
-		else if (!moving_right)
-			next_state = L0;
-	case R0:
-		if (!moving_right)
-			next_state = STOP;
-	case L0:
-		if (moving_right)
-			next_state = STOP;
-	}
-	vTaskDelay(MOVE_TICKS);
-	return next_state;
-}
 
 /****************************************************************************
  *
