@@ -495,10 +495,14 @@ static void prvUpdateScreen(game_t *this_game)
  *
  * function determines player GO animation state, based on user input, and
  * elapsed time
+ *
  * every GO must have a STOP state, used as a default initial state of being
- * STOP, FIRE, CROUCH, R0, R1, R2, L0, L1, L2, // basic animation states, player
- * U0, D0, // additional states needed by aliens who move (U)p and (D)own
- * SELFCLEAN0, SELFCLEAN1, SELFCLEAN2, SELFCLEAN3 // states just for kitties
+ *
+ * additional GO-specific states:
+ *
+ * 		* player: FIRE, CROUCH, R0, R1, R2, L0, L1, L2, // basic animation states, player
+ * 		* aliens: U0, D0, // additional states needed by aliens who move (U)p and (D)own
+ * 		* kitties: SELFCLEAN0, SELFCLEAN1, SELFCLEAN2, SELFCLEAN3 // states just for kitties
  *
  */
 superstateGO_t vPlayerStateMachine(superstateGO_t current_state)
@@ -554,15 +558,14 @@ superstateGO_t vPlayerStateMachine(superstateGO_t current_state)
 		if (user_input.fire_button || user_input.left_button
 				|| user_input.right_button)
 		{
-			next_state = STOP;
+			next_state = STOP; // stand up!
 		}
 	case FIRE:
 		if (user_input.crouch_button || user_input.left_button
 				|| user_input.right_button)
 		{
-			next_state = STOP;
+			next_state = STOP; // got to get in position before shooting!
 		}
-	default:
 	}
 	vTaskDelay(MOVE_TICKS);
 	return next_state;
@@ -574,12 +577,12 @@ superstateGO_t vPlayerStateMachine(superstateGO_t current_state)
  * elapsed time
  *
  * every GO must have a STOP state, used as a default initial state of being
- * STOP, FIRE, CROUCH, R0, R1, R2, L0, L1, L2, // basic animation states, player
- * U0, D0, // additional states needed by aliens who move (U)p and (D)own
- * SELFCLEAN0, SELFCLEAN1, SELFCLEAN2, SELFCLEAN3 // states just for kitties
  *
+ * additional GO-specific states:
  *
- *
+ * 		* player: FIRE, CROUCH, R0, R1, R2, L0, L1, L2, // basic animation states, player
+ * 		* aliens: U0, D0, // additional states needed by aliens who move (U)p and (D)own
+ * 		* kitties: SELFCLEAN0, SELFCLEAN1, SELFCLEAN2, SELFCLEAN3 // states just for kitties
  *
  */
 superstateGO_t vAlienStateMachine(superstateGO_t current_state, go_coord_t vel)
@@ -680,37 +683,6 @@ void vImpactsTask(void *pvParams)
 {
 	game_t *this_game = (game_t *) pvParams;
 	uint32_t GOIDcode;
-
-	/*
-	 * to begin with, spawn off an alien and two babies...
-	 */
-	if (prvGetGOIDCode(this_game->aliensID, &GOIDcode))
-	{
-		go_coord_t alien_start_posn =
-		{ XMIDDLE, YMIDDLE };
-		go_t *pAlien = spawnGONodeandTask(this_game, this_game->aliens, alien,
-				alien_start_posn, this_game->aliensID, GOIDcode);
-		pAlien->numlives = 1;
-		pAlien->health = 1024;
-	}
-	if (prvGetGOIDCode(this_game->babiesID, &GOIDcode))
-	{
-		go_coord_t baby_start_posn_LEFT =
-		{ XLEFT, YBOTTOM };
-		go_t *pBaby = spawnGONodeandTask(this_game, this_game->babies, baby,
-				baby_start_posn_LEFT, this_game->babiesID, GOIDcode);
-		pBaby->numlives = 1;
-		pBaby->health = 128;
-	}
-	if (prvGetGOIDCode(this_game->babiesID, &GOIDcode))
-	{
-		go_coord_t baby_start_posn_MID =
-		{ XMIDDLE, YBOTTOM };
-		go_t *pBaby = spawnGONodeandTask(this_game, this_game->babies, baby,
-				baby_start_posn_MID, this_game->babiesID, GOIDcode);
-		pBaby->numlives = 1;
-		pBaby->health = 128;
-	}
 
 	/* main loop of Impacts Task */
 	uint8_t levelLambda = 0U;
